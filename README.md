@@ -1,44 +1,60 @@
 # freetube-vim-navigation
 
-Vimium-style hints for [FreeTube](https://github.com/FreeTubeApp/FreeTube), kept as a small overlay you apply onto each new source release. No upstream PR.
+**English** | [Русский](README.ru.md)
 
-This is **not** a patch of `/usr/lib/freetube/app.asar`. Arch `freetube-bin` / CachyOS binary packages cannot pick it up. You need a **source** build (AUR `freetube`, nixpkgs `freetube`).
+Vimium-style keyboard navigation for [FreeTube](https://github.com/FreeTubeApp/FreeTube). It is a small overlay applied onto each source release, not a FreeTube fork and not an upstream PR.
+
+It does **not** patch an installed `app.asar`. Binary packages (`freetube-bin` and similar) cannot use it. You need a source build.
+
+Tested against FreeTube **0.26.0**.
 
 ## Keys
 
+Inactive in text fields, except Escape.
+
 | Key | Action |
 | --- | --- |
-| `f` | Link hints (skipped on `#/watch/…` so player fullscreen still works) |
-| `Alt+f` | Link hints everywhere |
-| `v` | Hints on video cards → open in the configured external player |
-| `Esc` | Cancel hints |
+| `f` or `Alt+f` | Hint labels on visible links, buttons, tabs, menus, and inputs |
+| Type the label | Activate that control (focus a field instead of clicking it) |
+| `v` | Hints on video cards / the watch page → open in the configured external player |
+| `j` / `k` | Scroll the page down / up |
+| `Ctrl+d` / `Ctrl+u` | Half-page down / up |
+| `gg` / `G` | Top / bottom |
+| `Esc` | Cancel hints, or blur the focused field |
+| `Shift+F` | Left for the player (fullscreen) |
 
-Toggle: Settings → General → Enable Vimium-style keyboard hints (on by default after the overlay is applied).
+On a watch page, `f` is hints, not fullscreen. Player seek with the arrow keys is unchanged; `j`/`k` scroll the page.
 
-`j` / `k` / `t` / player shortcuts are left alone.
+Collapsed “…more” description links are not hinted. Comment actions such as “Click to view comments” are.
+
+Hint letters: `asdfjklghn`. Click, scroll, or resize cancels the overlay.
+
+Toggle: **Settings → General → Enable Vimium-style keyboard hints** (on after apply).
 
 ## Apply onto a source tree
 
 ```bash
-python3 scripts/apply.py /path/to/FreeTube-0.25.3-beta
-python3 scripts/apply.py --check /path/to/FreeTube-0.25.3-beta
+python3 scripts/apply.py /path/to/FreeTube-0.26.0-beta
+python3 scripts/apply.py --check /path/to/FreeTube-0.26.0-beta
 ```
 
-The script copies `overlay/src/renderer/vim-navigation/` and inserts short marked hooks into:
+The script copies `overlay/src/renderer/vim-navigation/` and inserts marked hooks into:
 
 - `src/renderer/App.vue`
 - `src/renderer/store/modules/settings.js`
 - `src/renderer/components/GeneralSettings/GeneralSettings.vue`
 - `static/locales/en-US.yaml`
 
-It is idempotent. If a new tag moves those anchors, the script fails loudly — update `scripts/apply.py`, do not hand-edit FreeTube.
+It is idempotent. If a new tag moves those anchors, the script fails instead of producing a half-patched tree. Fix `scripts/apply.py`, do not hand-edit FreeTube.
 
-## Arch (PKGBUILD)
+## Arch
 
-Use a source package, not `freetube-bin`. In `prepare()`:
+A source package lives in [tyusha/pkgbuilds](https://gitlab.com/tyusha/pkgbuilds) as `freetube-vim`. It clones this repository and runs `apply.py` in `prepare()`.
+
+To patch any other source PKGBUILD (AUR `freetube`, not `freetube-bin`):
 
 ```bash
-python "$HOME/Projects/freetube-vim-navigation/scripts/apply.py" "$srcdir/FreeTube-$pkgver-beta"
+python "$HOME/git/freetube-vim-navigation/scripts/apply.py" "$srcdir/FreeTube-$pkgver-beta"
 ```
 
 See `packaging/arch/prepare.snippet`. After a version bump, run `apply.py --check` on the new tarball before `makepkg`.
@@ -47,7 +63,7 @@ See `packaging/arch/prepare.snippet`. After a version bump, run `apply.py --chec
 
 ```nix
 nixpkgs.overlays = [
-  (import /home/tyusha/Projects/freetube-vim-navigation/packaging/nixos/overlay.nix)
+  (import /path/to/freetube-vim-navigation/packaging/nixos/overlay.nix)
 ];
 ```
 
@@ -57,7 +73,9 @@ Then rebuild `freetube`. nixpkgs may lag behind GitHub tags; the overlay still a
 
 1. Unpack the new tag.
 2. `python3 scripts/apply.py --check <tree>`
-3. If it fails, adjust anchors in `scripts/apply.py` only.
+3. If it fails, update anchors in `scripts/apply.py` only.
 4. Apply, build, install.
 
-Do not maintain a fork of the whole FreeTube repo unless you want to. The overlay is the fork.
+## License
+
+[AGPL-3.0-or-later](LICENSE), same as FreeTube.
