@@ -1,0 +1,9 @@
+# Paste into prepare() of a source PKGBUILD (AUR freetube, not freetube-bin).
+# Point _overlay at this repository (or copy it into src).
+
+_overlay="${_overlay:-$HOME/Projects/freetube-vim-navigation}"
+
+prepare() {
+  python "$_overlay/scripts/apply.py" "$srcdir/FreeTube-$pkgver-beta"
+  # ... keep the rest of the upstream prepare() (electronDist, linux dir target, etc.)
+}
