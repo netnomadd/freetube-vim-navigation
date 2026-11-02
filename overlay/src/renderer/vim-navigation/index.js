@@ -455,9 +455,10 @@ function collectTargets(root, mode) {
     if (el.closest('.vimHint, .' + MARKER + '-hint')) {
       return false
     }
-    if (el.getAttribute('tabindex') === '-1' && el.closest(VIDEO_CARD_SELECTOR)) {
-      // Prefer the title link over the duplicate thumbnail link.
-      return !el.classList.contains('thumbnailLink')
+    // Collapsed description links are tabindex=-1; skip those and other
+    // non-tabbable duplicates (e.g. video thumbnails).
+    if (el.getAttribute('tabindex') === '-1') {
+      return false
     }
     return true
   })
@@ -467,6 +468,9 @@ function collectTargets(root, mode) {
  * @param {HTMLElement} el
  */
 function isVisible(el) {
+  if (el.closest('[hidden], [inert], [aria-hidden="true"]')) {
+    return false
+  }
   const rect = el.getBoundingClientRect()
   if (rect.width < 2 || rect.height < 2) {
     return false
@@ -478,8 +482,26 @@ function isVisible(el) {
   if (style.visibility === 'hidden' || style.display === 'none' || style.opacity === '0') {
     return false
   }
-  if (el.closest('[inert]')) {
-    return false
+  return isInsideOverflow(el, rect)
+}
+
+/**
+ * @param {HTMLElement} el
+ * @param {DOMRect} rect
+ */
+function isInsideOverflow(el, rect) {
+  let parent = el.parentElement
+  while (parent && parent !== document.documentElement) {
+    const cs = getComputedStyle(parent)
+    if (/(hidden|auto|scroll|clip)/.test(cs.overflowX + cs.overflowY)) {
+      const pr = parent.getBoundingClientRect()
+      const overlapW = Math.min(rect.right, pr.right) - Math.max(rect.left, pr.left)
+      const overlapH = Math.min(rect.bottom, pr.bottom) - Math.max(rect.top, pr.top)
+      if (overlapW < 2 || overlapH < 2) {
+        return false
+      }
+    }
+    parent = parent.parentElement
   }
   return true
 }
