@@ -145,7 +145,8 @@ function onKeydown(event) {
     return
   }
 
-  if (event.key === 'f' && !event.altKey && !event.shiftKey && !isWatchPage()) {
+  // Plain f is hints everywhere. Shift+F is left for the player fullscreen shortcut.
+  if (event.key === 'f' && !event.altKey && !event.shiftKey) {
     event.preventDefault()
     event.stopImmediatePropagation()
     showHints('click')
@@ -194,10 +195,6 @@ function onPointer() {
   if (state.mode) {
     hideHints()
   }
-}
-
-function isWatchPage() {
-  return location.hash.startsWith('#/watch/')
 }
 
 /**

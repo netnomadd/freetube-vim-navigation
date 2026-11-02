@@ -186,31 +186,41 @@ function updateEnableVimNavigation(value) {{
 
 def hook_locale(src: Path) -> None:
     path = first_existing(src, ["static/locales/en-US.yaml"])
-    text = path.read_text(encoding="utf-8")
-    if "Enable VIM Navigation:" in text:
-        return
-    general_anchor = "    Open Deep Links In New Window: Open URLs Passed to FreeTube in a New Window\n"
-    general_insert = (
-        general_anchor
-        + "    Enable VIM Navigation: Enable Vimium-style keyboard hints\n"
+    tooltip = (
+        "    Enable VIM Navigation: "
+        "Press f or Alt+f for link hints. Shift+F toggles player fullscreen. "
+        "Press v to open a video in the external player. Esc cancels.\n"
     )
-    if general_anchor not in text:
-        raise HookError(f"{path}: could not find General Settings locale string")
-    replace_once(path, general_anchor, general_insert)
-
-    tooltip_anchor = (
-        "    Open Deep Links In New Window: URLs passed to FreeTube, such as by redirect\n"
-    )
-    tooltip_insert = (
+    old_tooltip = (
         "    Enable VIM Navigation: "
         "Press f (not on the watch page) or Alt+f for link hints. "
         "Press v to open a video in the external player. Esc cancels.\n"
-        + tooltip_anchor
     )
-    if tooltip_anchor not in path.read_text(encoding="utf-8"):
-        # Tooltip is optional; the toggle still works with a missing tooltip key.
+    text = path.read_text(encoding="utf-8")
+    if old_tooltip in text:
+        replace_once(path, old_tooltip, tooltip)
+        text = path.read_text(encoding="utf-8")
+    if "Enable VIM Navigation: Enable Vimium-style keyboard hints" in text:
+        pass
+    else:
+        general_anchor = "    Open Deep Links In New Window: Open URLs Passed to FreeTube in a New Window\n"
+        if general_anchor not in text:
+            raise HookError(f"{path}: could not find General Settings locale string")
+        replace_once(
+            path,
+            general_anchor,
+            general_anchor + "    Enable VIM Navigation: Enable Vimium-style keyboard hints\n",
+        )
+
+    text = path.read_text(encoding="utf-8")
+    if tooltip in text:
         return
-    replace_once(path, tooltip_anchor, tooltip_insert)
+    tooltip_anchor = (
+        "    Open Deep Links In New Window: URLs passed to FreeTube, such as by redirect\n"
+    )
+    if tooltip_anchor not in text:
+        return
+    replace_once(path, tooltip_anchor, tooltip + tooltip_anchor)
 
 
 HOOKS = [
