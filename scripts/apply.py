@@ -188,12 +188,13 @@ def hook_locale(src: Path) -> None:
     path = first_existing(src, ["static/locales/en-US.yaml"])
     tooltip = (
         "    Enable VIM Navigation: "
-        "Press f or Alt+f for link hints. Shift+F toggles player fullscreen. "
-        "Press v to open a video in the external player. Esc cancels.\n"
+        "f/Alt+f link hints, v external player, j/k scroll, gg/G top/bottom, "
+        "Ctrl+d/u half-page. Shift+F fullscreen. Esc cancels or blurs. "
+        "On a video page j/k scroll the page (arrows still seek).\n"
     )
     old_tooltip = (
         "    Enable VIM Navigation: "
-        "Press f (not on the watch page) or Alt+f for link hints. "
+        "Press f or Alt+f for link hints. Shift+F toggles player fullscreen. "
         "Press v to open a video in the external player. Esc cancels.\n"
     )
     text = path.read_text(encoding="utf-8")

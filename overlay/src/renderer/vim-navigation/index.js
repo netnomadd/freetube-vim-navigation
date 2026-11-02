@@ -27,13 +27,14 @@ const EXTERNAL_BUTTON_SELECTOR = '.externalPlayerIcon button, .externalPlayerIco
 /** @type {WeakMap<HTMLElement, HTMLElement>} */
 const hintTargets = new WeakMap()
 
-/** @type {{ store: unknown, hints: HTMLElement[], typed: string, mode: 'click' | 'external' | null, listeners: boolean }} */
+/** @type {{ store: unknown, hints: HTMLElement[], typed: string, mode: 'click' | 'external' | null, listeners: boolean, pendingG: boolean }} */
 const state = {
   store: null,
   hints: [],
   typed: '',
   mode: null,
   listeners: false,
+  pendingG: false,
 }
 
 const CSS_TEXT = `
@@ -119,7 +120,7 @@ function injectCss() {
  * @param {KeyboardEvent} event
  */
 function onKeydown(event) {
-  if (!isEnabled() || event.ctrlKey || event.metaKey) {
+  if (!isEnabled()) {
     return
   }
 
@@ -138,9 +139,29 @@ function onKeydown(event) {
     return
   }
 
+  if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+    if (event.key.toLowerCase() === 'd') {
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      state.pendingG = false
+      scrollPage(halfPageDelta())
+    } else if (event.key.toLowerCase() === 'u') {
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      state.pendingG = false
+      scrollPage(-halfPageDelta())
+    }
+    return
+  }
+
+  if (event.ctrlKey || event.metaKey) {
+    return
+  }
+
   if (event.altKey && event.key.toLowerCase() === 'f') {
     event.preventDefault()
     event.stopImmediatePropagation()
+    state.pendingG = false
     showHints('click')
     return
   }
@@ -149,6 +170,7 @@ function onKeydown(event) {
   if (event.key === 'f' && !event.altKey && !event.shiftKey) {
     event.preventDefault()
     event.stopImmediatePropagation()
+    state.pendingG = false
     showHints('click')
     return
   }
@@ -156,8 +178,52 @@ function onKeydown(event) {
   if (event.key.toLowerCase() === 'v' && !event.altKey) {
     event.preventDefault()
     event.stopImmediatePropagation()
+    state.pendingG = false
     showHints('external')
+    return
   }
+
+  if (event.altKey) {
+    return
+  }
+
+  if (event.key === 'j' && !event.shiftKey) {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    state.pendingG = false
+    scrollPage(lineDelta())
+    return
+  }
+
+  if (event.key === 'k' && !event.shiftKey) {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    state.pendingG = false
+    scrollPage(-lineDelta())
+    return
+  }
+
+  if (event.key === 'G' && event.shiftKey) {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    state.pendingG = false
+    scrollPage(Number.POSITIVE_INFINITY)
+    return
+  }
+
+  if (event.key === 'g' && !event.shiftKey) {
+    event.preventDefault()
+    event.stopImmediatePropagation()
+    if (state.pendingG) {
+      state.pendingG = false
+      scrollPage(Number.NEGATIVE_INFINITY)
+    } else {
+      state.pendingG = true
+    }
+    return
+  }
+
+  state.pendingG = false
 }
 
 /**
@@ -195,6 +261,47 @@ function onPointer() {
   if (state.mode) {
     hideHints()
   }
+}
+
+function lineDelta() {
+  return Math.max(60, Math.round(window.innerHeight * 0.12))
+}
+
+function halfPageDelta() {
+  return Math.max(120, Math.round(window.innerHeight * 0.45))
+}
+
+/**
+ * @returns {Element}
+ */
+function scrollingElement() {
+  const prompt = document.querySelector('.prompt')
+  if (prompt instanceof HTMLElement && prompt.scrollHeight > prompt.clientHeight + 8) {
+    return prompt
+  }
+  const main = document.querySelector('[role="main"]')
+  if (main instanceof HTMLElement && main.scrollHeight > main.clientHeight + 8) {
+    return main
+  }
+  return document.scrollingElement || document.documentElement
+}
+
+/**
+ * @param {number} delta
+ */
+function scrollPage(delta) {
+  const el = scrollingElement()
+  if (!Number.isFinite(delta)) {
+    el.scrollTo({
+      top: delta > 0 ? el.scrollHeight : 0,
+      behavior: 'auto',
+    })
+    return
+  }
+  el.scrollBy({
+    top: delta,
+    behavior: 'auto',
+  })
 }
 
 /**
@@ -509,6 +616,7 @@ function hideHints() {
   state.hints = []
   state.typed = ''
   state.mode = null
+  state.pendingG = false
   document.getElementById(`${MARKER}-banner`)?.remove()
 }
 
