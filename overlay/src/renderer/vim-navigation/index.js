@@ -13,8 +13,13 @@ const CLICK_SELECTOR = [
   '[role="button"]',
   '[role="tab"]',
   '[role="link"]',
+  '[role="option"]',
+  '[role="menuitem"]',
+  '[role="menuitemradio"]',
+  '[role="menuitemcheckbox"]',
   'input[type="text"]',
   'input[type="search"]',
+  '.profileList .profile',
 ].join(', ')
 
 const VIDEO_CARD_SELECTOR = '.ft-list-video, .ft-list-item'
