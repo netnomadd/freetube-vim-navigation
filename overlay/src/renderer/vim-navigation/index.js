@@ -455,9 +455,9 @@ function collectTargets(root, mode) {
     if (el.closest('.vimHint, .' + MARKER + '-hint')) {
       return false
     }
-    // Collapsed description links are tabindex=-1; skip those and other
-    // non-tabbable duplicates (e.g. video thumbnails).
-    if (el.getAttribute('tabindex') === '-1') {
+    // Collapsed description / thumbnail links use tabindex=-1. Channel and
+    // subscription tabs also use it (ARIA tablist) and still need hints.
+    if (el.getAttribute('tabindex') === '-1' && el.tagName === 'A') {
       return false
     }
     return true
