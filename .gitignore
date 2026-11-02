@@ -1,7 +1,7 @@
 *.tar.gz
 *.tar.zst
-src/
-pkg/
+/src/
+/pkg/
 *.pkg.tar.*
 .DS_Store
 __pycache__/

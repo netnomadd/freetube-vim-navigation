@@ -48,9 +48,16 @@ def replace_once(path: Path, old: str, new: str, *, required: bool = True) -> bo
 
 
 def copy_overlay(src: Path) -> None:
+    overlay_mod = OVERLAY / "src" / "renderer" / "vim-navigation"
+    if not overlay_mod.is_dir():
+        raise HookError(
+            f"overlay module missing: {overlay_mod}\n"
+            "The vim-navigation git checkout has no overlay/ tree "
+            "(often because overlay/src/ was ignored). Commit overlay/ and rebuild."
+        )
     dest = src / "src" / "renderer" / "vim-navigation"
     dest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(OVERLAY / "src" / "renderer" / "vim-navigation", dest, dirs_exist_ok=True)
+    shutil.copytree(overlay_mod, dest, dirs_exist_ok=True)
 
 
 def hook_settings(src: Path) -> None:
