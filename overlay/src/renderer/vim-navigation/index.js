@@ -129,6 +129,12 @@ function onKeydown(event) {
   }
 
   if (isEditable(event.target) || isEditable(document.activeElement)) {
+    if (event.key === 'Escape' || event.key === 'Esc') {
+      const field = isEditable(event.target) ? event.target : document.activeElement
+      field.blur()
+      event.preventDefault()
+      event.stopImmediatePropagation()
+    }
     return
   }
 
