@@ -17,8 +17,7 @@ const CLICK_SELECTOR = [
   '[role="menuitem"]',
   '[role="menuitemradio"]',
   '[role="menuitemcheckbox"]',
-  'input[type="text"]',
-  'input[type="search"]',
+  'input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"])',
   '.profileList .profile',
 ].join(', ')
 
@@ -129,7 +128,7 @@ function onKeydown(event) {
     return
   }
 
-  if (isTypingTarget(event.target)) {
+  if (isEditable(event.target) || isEditable(document.activeElement)) {
     return
   }
 
@@ -197,8 +196,9 @@ function isWatchPage() {
 
 /**
  * @param {EventTarget | null} target
+ * @returns {target is HTMLElement}
  */
-function isTypingTarget(target) {
+function isEditable(target) {
   if (!(target instanceof HTMLElement)) {
     return false
   }
@@ -206,7 +206,47 @@ function isTypingTarget(target) {
     return true
   }
   const tag = target.tagName
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
+  if (tag === 'TEXTAREA' || tag === 'SELECT') {
+    return true
+  }
+  if (tag !== 'INPUT') {
+    return false
+  }
+  const type = (target.getAttribute('type') || 'text').toLowerCase()
+  return !['button', 'submit', 'reset', 'checkbox', 'radio', 'file', 'hidden', 'image', 'range', 'color'].includes(type)
+}
+
+/**
+ * @param {HTMLElement} el
+ * @returns {HTMLElement | null}
+ */
+function findEditable(el) {
+  if (isEditable(el)) {
+    return el
+  }
+  const inner = el.querySelector(
+    'input:not([type="hidden"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]), textarea, [contenteditable="true"]'
+  )
+  return inner instanceof HTMLElement && isEditable(inner) ? inner : null
+}
+
+/**
+ * @param {HTMLElement} field
+ */
+function focusEditable(field) {
+  // FreeTube itself focuses the search bar asynchronously so Chromium on
+  // KDE/Plasma actually shows a caret (see FreeTube#2019).
+  setTimeout(() => {
+    field.focus()
+    if (typeof field.setSelectionRange === 'function') {
+      try {
+        const len = field.value?.length ?? 0
+        field.setSelectionRange(len, len)
+      } catch {
+        // some input types reject setSelectionRange
+      }
+    }
+  }, 0)
 }
 
 /**
@@ -396,6 +436,11 @@ function activate(hint) {
   }
   if (mode === 'external') {
     openExternal(target)
+    return
+  }
+  const field = findEditable(target)
+  if (field) {
+    focusEditable(field)
     return
   }
   target.click()
